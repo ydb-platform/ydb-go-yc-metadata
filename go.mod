@@ -1,4 +1,4 @@
-module github.com/ydb-platform/ydb-go-yc
+module github.com/ydb-platform/ydb-go-yc-metadata
 
 go 1.16
 

@@ -3,8 +3,8 @@ package yc
 import (
 	"context"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
-	"github.com/ydb-platform/ydb-go-yc/internal/auth"
-	"github.com/ydb-platform/ydb-go-yc/internal/pem"
+	"github.com/ydb-platform/ydb-go-yc-metadata/internal/auth"
+	"github.com/ydb-platform/ydb-go-yc-metadata/internal/pem"
 )
 
 func WithURL(url string) auth.InstanceServiceAccountCredentialsOption {
