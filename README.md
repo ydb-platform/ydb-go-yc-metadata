@@ -48,7 +48,7 @@ go get -u github.com/ydb-platform/ydb-go-yc-metadata
 import (
 	yc "github.com/ydb-platform/ydb-go-yc-metadata"
 )
-
+...
     db, err := ydb.New(
         ctx,
         connectParams,
