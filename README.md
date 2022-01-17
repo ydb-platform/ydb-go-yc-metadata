@@ -45,11 +45,15 @@ go get -u github.com/ydb-platform/ydb-go-yc-metadata
 ## Usage <a name="Usage"></a>
 
 ```go
+import (
+	yc "github.com/ydb-platform/ydb-go-yc-metadata"
+)
+
     db, err := ydb.New(
         ctx,
         connectParams,
-        metadata.WithInternalCA(),
-        metadata.WithCredentials(ctx), // auth inside cloud (virual machine or yandex function)
+        yc.WithInternalCA(),
+        yc.WithCredentials(ctx), // auth inside cloud (virtual machine or yandex function)
     )
     
 ```
