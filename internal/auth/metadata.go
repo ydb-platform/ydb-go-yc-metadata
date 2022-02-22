@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ydb-platform/ydb-go-sdk/v3/credentials"
+
+	"github.com/ydb-platform/ydb-go-yc-metadata/trace"
 )
 
 var _ credentials.Credentials = &instanceServiceAccountCredentials{}
@@ -25,10 +27,16 @@ type instanceServiceAccountCredentials struct {
 	metadataURL string
 
 	caller string
+
+	trace trace.Trace
 }
 
 // Token returns cached token if it is valid. Otherwise, will try to renew.
 func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token string, err error) {
+	onDone := trace.TraceOnGetToken(m.trace)
+	defer func() {
+		onDone(token, err)
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -81,7 +89,7 @@ func (m *instanceServiceAccountCredentials) refreshLoop() {
 // Otherwise, if current token has expired, clear it and set up err.
 func (m *instanceServiceAccountCredentials) refreshOnce() {
 	now := time.Now()
-	tok, err := metaCall(m.metadataURL)
+	tok, err := m.metaCall(m.metadataURL)
 
 	// Call has been performed, now updating fields
 	m.mu.Lock()
@@ -118,6 +126,12 @@ type InstanceServiceAccountCredentialsOption func(c *instanceServiceAccountCrede
 func WithInstanceServiceAccountURL(url string) InstanceServiceAccountCredentialsOption {
 	return func(c *instanceServiceAccountCredentials) {
 		c.metadataURL = url
+	}
+}
+
+func WithTrace(t trace.Trace) InstanceServiceAccountCredentialsOption {
+	return func(c *instanceServiceAccountCredentials) {
+		c.trace = t
 	}
 }
 
