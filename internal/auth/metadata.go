@@ -37,6 +37,15 @@ func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token st
 	defer func() {
 		onDone(token, err)
 	}()
+
+	// check token before launching loop
+	m.mu.RLock()
+	token, err = m.token, m.err
+	m.mu.RUnlock()
+	if token != "" || err != nil {
+		return token, err
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
