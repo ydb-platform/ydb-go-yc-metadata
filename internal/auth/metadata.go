@@ -40,7 +40,7 @@ func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token st
 	for {
 		select {
 		case <-ctx.Done():
-			return "", &CreateTokenError{
+			return "", &createTokenError{
 				Cause:  ctx.Err(),
 				Reason: ctx.Err().Error(),
 			}
@@ -70,7 +70,7 @@ func (m *instanceServiceAccountCredentials) refreshLoop() {
 		case <-m.ctx.Done():
 			// Set up error
 			m.mu.Lock()
-			m.token, m.err = "", &CreateTokenError{
+			m.token, m.err = "", &createTokenError{
 				Cause:  m.ctx.Err(),
 				Reason: m.ctx.Err().Error(),
 			}

@@ -30,7 +30,7 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 		if e := recover(); e != nil {
 			// Don't lose err
 			if err == nil {
-				err = &CreateTokenError{
+				err = &createTokenError{
 					Cause:  fmt.Errorf("panic: %#v", e),
 					Reason: "panic in metaCall",
 				}
@@ -40,7 +40,7 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 
 	resp, err := metaClient.Get(metadataURL)
 	if err != nil {
-		return nil, &CreateTokenError{
+		return nil, &createTokenError{
 			Cause:  err,
 			Reason: "failed to create HTTP request",
 		}
@@ -53,7 +53,7 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 	case http.StatusOK:
 		// nop, will read outside switch
 	case http.StatusNotFound:
-		return nil, &CreateTokenError{
+		return nil, &createTokenError{
 			Cause: fmt.Errorf("%s: possibly missing service_account_id in instance spec",
 				resp.Status,
 			),
@@ -64,7 +64,7 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, &CreateTokenError{
+		return nil, &createTokenError{
 			Cause:  err,
 			Reason: "response body read failed",
 		}
@@ -77,7 +77,7 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 
 	err = json.Unmarshal(body, &tokenResponse)
 	if err != nil {
-		return nil, &CreateTokenError{
+		return nil, &createTokenError{
 			Cause:  err,
 			Reason: "failed to unmarshal response body",
 		}
