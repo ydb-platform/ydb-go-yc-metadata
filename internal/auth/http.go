@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	metadataTrace "github.com/ydb-platform/ydb-go-yc-metadata/trace"
@@ -15,13 +16,13 @@ type metadataIAMResponse struct {
 	ExpiresIn time.Duration
 }
 
-func (m *instanceServiceAccountCredentials) metaCall(metadataURL string) (res *metadataIAMResponse, err error) {
-	onDone := metadataTrace.TraceOnRefreshToken(m.trace)
+func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metadataURL string) (res *metadataIAMResponse, err error) {
+	onDone := metadataTrace.TraceOnRefreshToken(m.trace, &ctx)
 	defer func() {
 		if err != nil {
 			onDone("", 0, err)
 		} else {
-			onDone(res.Token, res.ExpiresIn, err)
+			onDone(res.Token, res.ExpiresIn, nil)
 		}
 	}()
 

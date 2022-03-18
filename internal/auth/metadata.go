@@ -33,7 +33,7 @@ type instanceServiceAccountCredentials struct {
 
 // Token returns cached token if it is valid. Otherwise, will try to renew.
 func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token string, err error) {
-	onDone := trace.TraceOnGetToken(m.trace)
+	onDone := trace.TraceOnGetToken(m.trace, &ctx)
 	defer func() {
 		onDone(token, err)
 	}()
@@ -77,7 +77,7 @@ func (m *instanceServiceAccountCredentials) refreshLoop() {
 			m.mu.Unlock()
 			return
 		case <-m.timer.C:
-			m.refreshOnce()
+			m.refreshOnce(m.ctx)
 		}
 	}
 }
@@ -87,9 +87,9 @@ func (m *instanceServiceAccountCredentials) refreshLoop() {
 // 1. Clear current err;
 // 2. Set up new token and expiration;
 // Otherwise, if current token has expired, clear it and set up err.
-func (m *instanceServiceAccountCredentials) refreshOnce() {
+func (m *instanceServiceAccountCredentials) refreshOnce(ctx context.Context) {
 	now := time.Now()
-	tok, err := m.metaCall(m.metadataURL)
+	tok, err := m.metaCall(ctx, m.metadataURL)
 
 	// Call has been performed, now updating fields
 	m.mu.Lock()
@@ -131,7 +131,7 @@ func WithInstanceServiceAccountURL(url string) InstanceServiceAccountCredentials
 
 func WithTrace(t trace.Trace) InstanceServiceAccountCredentialsOption {
 	return func(c *instanceServiceAccountCredentials) {
-		c.trace = t
+		c.trace = c.trace.Compose(t)
 	}
 }
 

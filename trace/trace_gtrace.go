@@ -3,6 +3,7 @@
 package trace
 
 import (
+	"context"
 	"time"
 )
 
@@ -89,8 +90,9 @@ func (t Trace) onGetToken(g GetTokenStartInfo) func(GetTokenDoneInfo) {
 	}
 	return res
 }
-func TraceOnRefreshToken(t Trace) func(token string, expiresIn time.Duration, _ error) {
+func TraceOnRefreshToken(t Trace, c *context.Context) func(token string, expiresIn time.Duration, _ error) {
 	var p RefreshTokenStartInfo
+	p.Context = c
 	res := t.onRefreshToken(p)
 	return func(token string, expiresIn time.Duration, e error) {
 		var p RefreshTokenDoneInfo
@@ -100,8 +102,9 @@ func TraceOnRefreshToken(t Trace) func(token string, expiresIn time.Duration, _ 
 		res(p)
 	}
 }
-func TraceOnGetToken(t Trace) func(token string, _ error) {
+func TraceOnGetToken(t Trace, c *context.Context) func(token string, _ error) {
 	var p GetTokenStartInfo
+	p.Context = c
 	res := t.onGetToken(p)
 	return func(token string, e error) {
 		var p GetTokenDoneInfo
