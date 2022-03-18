@@ -65,6 +65,7 @@ func (m *instanceServiceAccountCredentials) String() string {
 
 func (m *instanceServiceAccountCredentials) refreshLoop() {
 	defer m.timer.Stop()
+	m.refreshOnce(m.ctx)
 	for {
 		select {
 		case <-m.ctx.Done():
