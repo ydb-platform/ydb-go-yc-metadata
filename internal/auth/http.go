@@ -38,7 +38,8 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 		}
 	}()
 
-	resp, err := metaClient.Get(metadataURL)
+	var resp *http.Response
+	resp, err = metaClient.Get(metadataURL)
 	if err != nil {
 		return nil, &createTokenError{
 			Cause:  err,
@@ -62,7 +63,8 @@ func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 	default:
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, &createTokenError{
 			Cause:  err,
