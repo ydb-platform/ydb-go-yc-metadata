@@ -49,9 +49,9 @@ import (
 	yc "github.com/ydb-platform/ydb-go-yc-metadata"
 )
 ...
-    db, err := ydb.New(
+    db, err := ydb.Open(
         ctx,
-        connectParams,
+		os.Getenv("YDB_CONNECTION_STRING"),
         yc.WithInternalCA(),
         yc.WithCredentials(ctx), // auth inside cloud (virtual machine or yandex function)
     )
