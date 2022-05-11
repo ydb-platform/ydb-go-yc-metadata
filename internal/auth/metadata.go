@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -10,19 +11,25 @@ import (
 	"github.com/ydb-platform/ydb-go-yc-metadata/trace"
 )
 
-var _ credentials.Credentials = &instanceServiceAccountCredentials{}
+var (
+	// check compatibility with ydb-go-sdk credentials interface
+	_ credentials.Credentials = (*InstanceServiceAccountCredentials)(nil)
+
+	errClosed = errors.New("instance service account client closed")
+)
 
 const metadataURL = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
 
-type instanceServiceAccountCredentials struct {
-	mu  *sync.RWMutex
-	ctx context.Context
+type InstanceServiceAccountCredentials struct {
+	mu *sync.RWMutex
 
 	token string
 	err   error
 
 	expiry time.Time
 	timer  *time.Timer
+
+	done chan struct{}
 
 	metadataURL string
 
@@ -32,7 +39,7 @@ type instanceServiceAccountCredentials struct {
 }
 
 // Token returns cached token if it is valid. Otherwise, will try to renew.
-func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token string, err error) {
+func (m *InstanceServiceAccountCredentials) Token(ctx context.Context) (token string, err error) {
 	onDone := trace.TraceOnGetToken(m.trace, &ctx)
 	defer func() {
 		onDone(token, err)
@@ -65,28 +72,36 @@ func (m *instanceServiceAccountCredentials) Token(ctx context.Context) (token st
 	}
 }
 
-func (m *instanceServiceAccountCredentials) String() string {
+func (m *InstanceServiceAccountCredentials) Stop() {
+	close(m.done)
+}
+
+func (m *InstanceServiceAccountCredentials) String() string {
 	if m.caller == "" {
 		return "InstanceServiceAccountCredentials (metadataURL=" + m.metadataURL + ")"
 	}
 	return "InstanceServiceAccountCredentials created from " + m.caller + " (metadataURL=" + m.metadataURL + ")"
 }
 
-func (m *instanceServiceAccountCredentials) refreshLoop() {
+func (m *InstanceServiceAccountCredentials) refreshLoop() {
 	defer m.timer.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for {
 		select {
-		case <-m.ctx.Done():
+		case <-m.done:
 			// Set up error
 			m.mu.Lock()
 			m.token, m.err = "", &createTokenError{
-				Cause:  m.ctx.Err(),
-				Reason: m.ctx.Err().Error(),
+				Cause:  errClosed,
+				Reason: errClosed.Error(),
 			}
 			m.mu.Unlock()
 			return
 		case <-m.timer.C:
-			m.refreshOnce(m.ctx)
+			m.refreshOnce(ctx)
 		}
 	}
 }
@@ -96,7 +111,7 @@ func (m *instanceServiceAccountCredentials) refreshLoop() {
 // 1. Clear current err;
 // 2. Set up new token and expiration;
 // Otherwise, if current token has expired, clear it and set up err.
-func (m *instanceServiceAccountCredentials) refreshOnce(ctx context.Context) {
+func (m *InstanceServiceAccountCredentials) refreshOnce(ctx context.Context) {
 	now := time.Now()
 	tok, err := m.metaCall(ctx, m.metadataURL)
 
@@ -130,22 +145,22 @@ func (m *instanceServiceAccountCredentials) refreshOnce(ctx context.Context) {
 	m.token, m.expiry, m.err = tok.Token, now.Add(tok.ExpiresIn), nil
 }
 
-type InstanceServiceAccountCredentialsOption func(c *instanceServiceAccountCredentials)
+type InstanceServiceAccountCredentialsOption func(c *InstanceServiceAccountCredentials)
 
 func WithInstanceServiceAccountURL(url string) InstanceServiceAccountCredentialsOption {
-	return func(c *instanceServiceAccountCredentials) {
+	return func(c *InstanceServiceAccountCredentials) {
 		c.metadataURL = url
 	}
 }
 
 func WithTrace(t trace.Trace) InstanceServiceAccountCredentialsOption {
-	return func(c *instanceServiceAccountCredentials) {
+	return func(c *InstanceServiceAccountCredentials) {
 		c.trace = c.trace.Compose(t)
 	}
 }
 
 func WithInstanceServiceAccountCredentialsSourceInfo(sourceInfo string) InstanceServiceAccountCredentialsOption {
-	return func(c *instanceServiceAccountCredentials) {
+	return func(c *InstanceServiceAccountCredentials) {
 		c.caller = sourceInfo
 	}
 }
@@ -153,11 +168,10 @@ func WithInstanceServiceAccountCredentialsSourceInfo(sourceInfo string) Instance
 // InstanceServiceAccount makes credentials provider that uses instance metadata url to obtain
 // token for service account attached to instance. Cancelling context will lead to credentials
 // refresh halt. It should be used during application stop or credentials recreation.
-func InstanceServiceAccount(ctx context.Context, opts ...InstanceServiceAccountCredentialsOption) credentials.Credentials {
-	credentials := &instanceServiceAccountCredentials{
+func InstanceServiceAccount(opts ...InstanceServiceAccountCredentialsOption) *InstanceServiceAccountCredentials {
+	credentials := &InstanceServiceAccountCredentials{
 		metadataURL: metadataURL,
 		mu:          &sync.RWMutex{},
-		ctx:         ctx,
 		timer:       time.NewTimer(0), // Allocate expired
 	}
 	for _, o := range opts {

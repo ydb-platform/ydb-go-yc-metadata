@@ -16,7 +16,7 @@ type metadataIAMResponse struct {
 	ExpiresIn time.Duration
 }
 
-func (m *instanceServiceAccountCredentials) metaCall(ctx context.Context, metadataURL string) (res *metadataIAMResponse, err error) {
+func (m *InstanceServiceAccountCredentials) metaCall(ctx context.Context, metadataURL string) (res *metadataIAMResponse, err error) {
 	onDone := metadataTrace.TraceOnRefreshToken(m.trace, &ctx)
 	defer func() {
 		if err != nil {

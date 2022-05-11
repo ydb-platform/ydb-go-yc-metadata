@@ -1,8 +1,6 @@
 package yc
 
 import (
-	"context"
-
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 
 	"github.com/ydb-platform/ydb-go-yc-metadata/internal/auth"
@@ -14,9 +12,9 @@ func WithURL(url string) auth.InstanceServiceAccountCredentialsOption {
 	return auth.WithInstanceServiceAccountURL(url)
 }
 
-func WithCredentials(ctx context.Context, opts ...auth.InstanceServiceAccountCredentialsOption) ydb.Option {
+func WithCredentials(opts ...auth.InstanceServiceAccountCredentialsOption) ydb.Option {
 	return ydb.WithCredentials(
-		NewInstanceServiceAccount(ctx, opts...),
+		NewInstanceServiceAccount(opts...),
 	)
 }
 
