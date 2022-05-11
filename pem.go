@@ -1,7 +1,7 @@
-package pem
+package yc
 
 // content of https://storage.yandexcloud.net/cloud-certs/CA.pem
-var YcPEM = []byte(`
+var ycPEM = []byte(`
 -----BEGIN CERTIFICATE-----
 MIIE3TCCAsWgAwIBAgIKPxb5sAAAAAAAFzANBgkqhkiG9w0BAQ0FADAfMR0wGwYD
 VQQDExRZYW5kZXhJbnRlcm5hbFJvb3RDQTAeFw0xNzA2MjAxNjQ0MzdaFw0yNzA2

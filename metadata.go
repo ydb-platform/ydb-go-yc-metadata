@@ -1,4 +1,4 @@
-package auth
+package yc
 
 import (
 	"context"
@@ -165,10 +165,10 @@ func WithInstanceServiceAccountCredentialsSourceInfo(sourceInfo string) Instance
 	}
 }
 
-// InstanceServiceAccount makes credentials provider that uses instance metadata url to obtain
+// instanceServiceAccount makes credentials provider that uses instance metadata url to obtain
 // token for service account attached to instance. Cancelling context will lead to credentials
 // refresh halt. It should be used during application stop or credentials recreation.
-func InstanceServiceAccount(opts ...InstanceServiceAccountCredentialsOption) *InstanceServiceAccountCredentials {
+func instanceServiceAccount(opts ...InstanceServiceAccountCredentialsOption) *InstanceServiceAccountCredentials {
 	credentials := &InstanceServiceAccountCredentials{
 		metadataURL: metadataURL,
 		mu:          &sync.RWMutex{},

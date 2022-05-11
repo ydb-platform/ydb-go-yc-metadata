@@ -1,14 +1,13 @@
 package yc
 
-import (
-	"github.com/ydb-platform/ydb-go-yc-metadata/internal/auth"
-)
-
-func NewInstanceServiceAccount(opts ...auth.InstanceServiceAccountCredentialsOption) *auth.InstanceServiceAccountCredentials {
-	return auth.InstanceServiceAccount(
+// NewInstanceServiceAccount makes credentials provider that uses instance metadata url to obtain
+// token for service account attached to instance. Cancelling context will lead to credentials
+// refresh halt. It should be used during application stop or credentials recreation.
+func NewInstanceServiceAccount(opts ...InstanceServiceAccountCredentialsOption) *InstanceServiceAccountCredentials {
+	return instanceServiceAccount(
 		append(
-			[]auth.InstanceServiceAccountCredentialsOption{
-				auth.WithInstanceServiceAccountCredentialsSourceInfo("yc.NewInstanceServiceAccount(ctx)"),
+			[]InstanceServiceAccountCredentialsOption{
+				WithInstanceServiceAccountCredentialsSourceInfo("yc.NewInstanceServiceAccount(ctx)"),
 			},
 			opts...,
 		)...,
