@@ -173,6 +173,7 @@ func instanceServiceAccount(opts ...InstanceServiceAccountCredentialsOption) *In
 		metadataURL: metadataURL,
 		mu:          &sync.RWMutex{},
 		timer:       time.NewTimer(0), // Allocate expired
+		done:        make(chan struct{}),
 	}
 	for _, o := range opts {
 		o(credentials)
