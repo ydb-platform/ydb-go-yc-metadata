@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	metadataTrace "github.com/ydb-platform/ydb-go-yc-metadata/trace"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -64,7 +64,7 @@ func (m *InstanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
 	var body []byte
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, &createTokenError{
 			Cause:  err,
