@@ -35,6 +35,8 @@ type InstanceServiceAccountCredentials struct {
 
 	caller string
 
+	retryNotFound bool
+
 	trace trace.Trace
 }
 
@@ -113,7 +115,7 @@ func (m *InstanceServiceAccountCredentials) refreshLoop() {
 // Otherwise, if current token has expired, clear it and set up err.
 func (m *InstanceServiceAccountCredentials) refreshOnce(ctx context.Context) {
 	now := time.Now()
-	tok, err := m.metaCall(ctx, m.metadataURL)
+	tok, err := m.metaCall(ctx, m.metadataURL, m.retryNotFound)
 
 	// Call has been performed, now updating fields
 	m.mu.Lock()
@@ -162,6 +164,12 @@ func WithTrace(t trace.Trace) InstanceServiceAccountCredentialsOption {
 func WithInstanceServiceAccountCredentialsSourceInfo(sourceInfo string) InstanceServiceAccountCredentialsOption {
 	return func(c *InstanceServiceAccountCredentials) {
 		c.caller = sourceInfo
+	}
+}
+
+func WithRetryNotFound() InstanceServiceAccountCredentialsOption {
+	return func(c *InstanceServiceAccountCredentials) {
+		c.retryNotFound = true
 	}
 }
 

@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	metadataTrace "github.com/ydb-platform/ydb-go-yc-metadata/trace"
 	"io"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/ydb-platform/ydb-go-sdk/v3/retry"
+	
+	metadataTrace "github.com/ydb-platform/ydb-go-yc-metadata/trace"
 )
 
 type metadataIAMResponse struct {
@@ -16,7 +19,7 @@ type metadataIAMResponse struct {
 	ExpiresIn time.Duration
 }
 
-func (m *InstanceServiceAccountCredentials) metaCall(ctx context.Context, metadataURL string) (res *metadataIAMResponse, err error) {
+func (m *InstanceServiceAccountCredentials) metaCall(ctx context.Context, metadataURL string, retryNotFound bool) (res *metadataIAMResponse, err error) {
 	onDone := metadataTrace.TraceOnRefreshToken(m.trace, &ctx)
 	defer func() {
 		if err != nil {
@@ -54,12 +57,16 @@ func (m *InstanceServiceAccountCredentials) metaCall(ctx context.Context, metada
 	case http.StatusOK:
 		// nop, will read outside switch
 	case http.StatusNotFound:
-		return nil, &createTokenError{
+		err = &createTokenError{
 			Cause: fmt.Errorf("%s: possibly missing service_account_id in instance spec",
 				resp.Status,
 			),
 			Reason: "possibly missing service_account_id in instance spec",
 		}
+		if retryNotFound {
+			return nil, retry.RetryableError(err, retry.WithBackoff(retry.TypeFastBackoff))
+		}
+		return nil, err
 	default:
 		return nil, fmt.Errorf("%s", resp.Status)
 	}
