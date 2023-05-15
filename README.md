@@ -17,7 +17,7 @@ import (
 ...
     db, err := ydb.Open(
         ctx,
-		os.Getenv("YDB_CONNECTION_STRING"),
+	os.Getenv("YDB_CONNECTION_STRING"),
         yc.WithInternalCA(),
         yc.WithCredentials(ctx), // auth inside cloud (virtual machine or yandex function)
     )
